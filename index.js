@@ -39,10 +39,29 @@ async function run() {
     app.get("/products", async (req, res) => {
       const brand_name = req.query.brand_name;
 
+      if (!brand_name) {
+        return res
+          .status(400)
+          .json({ error: "brand_name parameter is required" });
+      }
+
       const filter = { brand_name };
-      const cursor = productCollection.find(filter);
-      const result = await cursor.toArray();
-      res.json(result);
+
+      try {
+        const cursor = productCollection.find(filter);
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
+    app.get("/products:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
     });
 
     app.post("/products", async (req, res) => {
