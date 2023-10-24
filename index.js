@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();j
 
     const productCollection = client.db("brandShopDB").collection("product");
     const brandCollection = client.db("brandShopDB").collection("brand");
@@ -57,7 +57,7 @@ async function run() {
       }
     });
 
-    app.get("/products:id", async (req, res) => {
+    app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.findOne(query);
@@ -70,8 +70,33 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const product = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+
+      const updateProduct = {
+        $set: {
+          image_url: product.image_url,
+          product_name: product.product_name,
+          brand_name: product.brand_name,
+          product_price: product.product_price,
+          product_rating: product.product_rating,
+          category: product.category,
+          short_description: product.short_description,
+        },
+      };
+      const result = await productCollection.updateOne(
+        filter,
+        updateProduct,
+        options
+      );
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
